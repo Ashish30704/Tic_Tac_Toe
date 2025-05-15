@@ -4,6 +4,7 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Wrapper from '../components/Wrapper';
 import {useNavigation} from '@react-navigation/native';
+import WinningModal from '../components/WinningModal';
 
 const GameScreen = () => {
   const [array, setArray] = useState([
@@ -22,6 +23,7 @@ const GameScreen = () => {
   const [currentColor, setColor] = useState(colors[0]);
   const [turn, setTurn] = useState('O');
   const [winner, setWinner] = useState(null);
+  const [modalVisible, setVisible] = useState(false)
 
   useEffect(() => {}, [array, turn]);
 
@@ -35,12 +37,11 @@ const GameScreen = () => {
     setArray(newArray);
     if (win !== null) {
       setWinner(win);
-      Alert.alert(`${win} Won`, 'Game Over');
-      reset();
+      setVisible(true)
     } else {
       if (isDraw) {
-        Alert.alert('Game Draw');
-        reset();
+        setWinner('draw')
+        setVisible(true)
         return;
       }
       setTurn(turn === 'O' ? 'X' : 'O');
@@ -64,6 +65,7 @@ const GameScreen = () => {
       [null, null, null],
     ]);
     setWinner(null);
+    setVisible(false)
     setTurn('O');
   };
 
@@ -105,6 +107,7 @@ const GameScreen = () => {
 
   return (
     <Wrapper>
+      <WinningModal visible={modalVisible} result={winner} onPlayAgain={()=>reset()} onClose={()=>{setVisible(false); navigation.goBack()}} />
       <View style={styles.header}>
         <View style={{flexDirection: 'row', gap: 10}}>
           <Text style={[styles.heading, {color: '#feffa3'}]}>Tic</Text>
@@ -147,9 +150,7 @@ const GameScreen = () => {
           <Text style={styles.resetText}>Go Back</Text>
         </TouchableOpacity>
       </View>
-      {/* </View> */}
     </Wrapper>
-    // </ScrollView>
   );
 };
 

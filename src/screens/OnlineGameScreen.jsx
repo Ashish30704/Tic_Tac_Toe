@@ -24,17 +24,20 @@ import {
   setCurrentTurn,
   setGameStatus
 } from '../redux/slices/mainSlice';
+import WinningModal from '../components/WinningModal';
 
 const OnlineGameScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+
+  const [modalVisible, setVisible] = useState(false)
   
   // Get game state from Redux
   const user = useSelector(state => state.main.user);
   const gameRoomId = useSelector(state => state.main.gameRoomId);
   const isPlayer1 = useSelector(state => state.main.isPlayer1);
   const opponentUser = useSelector(state => state.main.opponentUser);
-  const array = useSelector(state => state.main.array);
+  const gameboardObject = useSelector(state => state.main.array);
   
   const [gameData, setGameData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +73,8 @@ const OnlineGameScreen = () => {
       }
       
       // Update game board
-      dispatch(setGameArray(JSON.parse(data.gameBoard)));
+      
+      dispatch(setGameArray(data.gameBoard));
       
       // Update turn
       dispatch(setCurrentTurn(data.currentTurn));
@@ -85,13 +89,15 @@ const OnlineGameScreen = () => {
         if (data.winner === 'O' || data.winner === 'X') {
           const winnerName = (data.winner === 'O') ? data.player1 : data.player2;
           const isCurrentUserWinner = winnerName === user;
-          Alert.alert(
-            'Game Over',
-            isCurrentUserWinner ? 'You won! 🎉' : `${winnerName} won!`,
-            [{ text: 'OK' }]
-          );
+          setVisible(true)
+          // Alert.alert(
+          //   'Game Over',
+          //   isCurrentUserWinner ? 'You won! 🎉' : `${winnerName} won!`,
+          //   [{ text: 'OK' }]
+          // );
         } else if (data.winner === 'draw') {
-          Alert.alert('Game Over', 'It\'s a draw!', [{ text: 'OK' }]);
+          setVisible(true)
+          // Alert.alert('Game Over', 'It\'s a draw!', [{ text: 'OK' }]);
         }
       }
       
@@ -126,7 +132,7 @@ const OnlineGameScreen = () => {
     if (!isMyTurn) return;
     
     // Don't allow moves if cell is already filled
-    if (array[row][col] !== null) return;
+    if (gameboardObject[row][col] !== null) return;
     
     try {
       // Make the move
@@ -172,6 +178,17 @@ const OnlineGameScreen = () => {
     }
   };
 
+  // Convert the game board object to array of arrays for rendering
+  const boardArray = gameboardObject ? [
+    gameboardObject['0'], 
+    gameboardObject['1'], 
+    gameboardObject['2']
+  ] : [
+    [null, null, null],
+    [null, null, null],
+    [null, null, null]
+  ];
+
   if (loading) {
     return (
       <Wrapper>
@@ -185,6 +202,7 @@ const OnlineGameScreen = () => {
 
   return (
     <Wrapper>
+            <WinningModal visible={modalVisible} result={winner} onPlayAgain={()=>{setVisible(false); resetGameAction()}} onClose={()=>{setVisible(false); navigation.navigate("Home")}} />
       <View style={styles.header}>
         <View style={{flexDirection: 'row', gap: 10}}>
           <Text style={[styles.heading, {color: '#feffa3'}]}>Tic</Text>
@@ -216,7 +234,7 @@ const OnlineGameScreen = () => {
       </View>
 
       <View style={styles.gameContainer}>
-        {array.map((row, rowIndex) => (
+        {boardArray.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
             {row.map((item, colIndex) => (
               <TouchableOpacity
